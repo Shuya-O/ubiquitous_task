@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="jp">
+<head>
+    <meta charset="UTF-8">
+    <title>Geolocation Tracking</title>
+    <script>
+    window.onload = function(){
+        navigator.geolocation.watchPosition(update); //現在位置情報を定期的に監視
+        // navigator.geolocation.clearWatch(); //watchPosition()での監視を中止
+    }
+
+    function update(position){
+        //下記すべての情報が取得できるわけでは無い
+        var lat = position.coords.latitude; //緯度
+        var lng = position.coords.longitude; //経度
+        var alt = position.coords.altiude; //高度
+        var acc = position.coords.accuracy; //緯度経度の誤差
+        var alc = position.coords.altiudeAccuracy; //高度の誤差
+        var hed = position.coords.heading; //方角
+        var spe = position.coords.speed; //スピード
+
+        var txt  = "緯度:" + lat + "<br>";
+            txt += "経度:" + lng + "<br>";
+            txt += "高度:" + alt + "<br>";
+            txt += "緯度経度誤差:" + acc + "<br>";
+            txt += "高度誤差:" + alc + "<br>";
+            txt += "方角:" + hed + "<br>";
+            txt += "速度:" + spe + "<br>";    
+        console.log(txt);
+        document.getElementById("result").innerHTML = txt;
+    }
+    </script>
+</head>
+<body>
+
+    <body>
+    <p>あなたの現在位置</p>
+    <div id="result"></div>
+</body>
+</html>
