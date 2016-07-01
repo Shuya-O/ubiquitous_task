@@ -1,3 +1,22 @@
+<?php
+if(isset($_REQUEST["action"])){//JSとの通信処理用のコマンド軍
+if($_REQUEST["action"]=="register"){//JSから登録するようにといわれた
+if(!isset($_REQUEST["i"]) or !isset($_REQUEST["k"])) die("Insaficient parameter");//位置情報がないってどういうこっちゃねん
+//パラメータはちゃんとあるらしいから追記
+$fp=fopen("locations.dat","a");
+flock($fp,LOCK_EX);
+fwrite($fp,"\r\n".sprintf("%f,%f,新規登録地点",$_REQUEST["i"],$_REQUEST["k"]));
+flock($fp,LOCK_UN);
+fclose($fp);
+die("OK");
+}//追加した
+
+if($_REQUEST["action"]=="retrieve"){//JSから情報がほしいといわれた
+die(file_get_contents("locations.dat"));//持ってる情報をぶん投げる
+}
+}//JSとの通信処理終了
+?>
+
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
 <html lang="ja">
 <head>
@@ -19,6 +38,7 @@ return true;
 <?php
 $program_name="geoServer.php";//自分自身のファイル名
 if(isset($_REQUEST["action"])){//処理がリクエストされた
+
 if($_REQUEST["action"]=="change"){//名前を変更したいらしいので、新しい名前を聞く
 echo("<p>登録場所の名前を変更できます。新しい名前を入力してから、変更ボタンをクリックしてください。</p>\r\n");
 echo('<form name="inputForm" action="" method="get">');
