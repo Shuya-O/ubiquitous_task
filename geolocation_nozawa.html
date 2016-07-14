@@ -4,12 +4,11 @@
     <meta charset="UTF-8">
     <title>Geolocation Tracking</title>
     <script>
+var snd=new Audio("process.mp3");
 var xhr= new XMLHttpRequest();
 var locations=[];
 var lat, lng;
     window.onload = function(){
-        navigator.geolocation.watchPosition(update); //現在位置情報を定期的に監視
-        // navigator.geolocation.clearWatch(); //watchPosition()での監視を中止
 //サーバーから登録位置情報を引っ張る
 xhr.open("GET","http://www.nyanchangames.com/geoServer.php?action=retrieve");//とりあえずうちのサーバになってる
 xhr.send();
@@ -23,7 +22,15 @@ xhr.removeEventListener("load", arguments.callee, false);
 });
     }
 
+function startTracking(){
+document.getElementById("main").innerHTML="<p>アプリケーションが動作中です。</p>";
+document.getElementById("btn").innerHTML='<p><button type="button" onclick="postLocation();">現在地を登録</button></p>';
+snd.load();
+        navigator.geolocation.watchPosition(update); //現在位置情報を定期的に監視
+}
+
     function update(position){
+snd.play();
         //下記すべての情報が取得できるわけでは無い
         lat = position.coords.latitude; //緯度
         lng = position.coords.longitude; //経度
@@ -55,10 +62,11 @@ xhr.removeEventListener("load", arguments.callee, false);
 </head>
 <body>
 
-    <p>あなたの現在位置</p>
+<div id="main">
+    <p>トラッキングを開始するには、「スタート」ボタンを押してください。</p>
+<button type="button" onclick="startTracking();">スタート</button>
+</div>
+<div id="btn"></div>
     <div id="result"></div>
-<p>
-<button type="button" onclick="postLocation();">現在地を登録</button>
-</p>
 </body>
 </html>

@@ -5,10 +5,10 @@ if(!isset($_REQUEST["i"]) or !isset($_REQUEST["k"])) die("Insaficient parameter"
 //パラメータはちゃんとあるらしいから追記
 $fp=fopen("locations.dat","a");
 flock($fp,LOCK_EX);
-fwrite($fp,"\r\n".sprintf("%f,%f,新規登録地点",$_REQUEST["i"],$_REQUEST["k"]));
+fwrite($fp,"\r\n".sprintf("%.10f,%.10f,新規登録地点",$_REQUEST["i"],$_REQUEST["k"]));
 flock($fp,LOCK_UN);
 fclose($fp);
-die("OK");
+die("OK:".$_REQUEST["i"]." ".$_REQUEST["k"]);
 }//追加した
 
 if($_REQUEST["action"]=="retrieve"){//JSから情報がほしいといわれた
