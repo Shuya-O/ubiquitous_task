@@ -4,37 +4,133 @@
     <meta charset="UTF-8">
     <title>Geolocation Tracking</title>
     <script>
+//Geolocation Tracking スクリプト開始
+//音を用意
+//var snd_beep=new Audio("process.mp3");//デバッグで使ってただけなのでコメントアウト
+var snd_cancel=new Audio("cancel.mp3");//位置情報が範囲外に出た音
+var snd_find=new Audio("find.mp3");//どこかの地点に重なった音
+var snd_begin=new Audio("begin.mp3");//スタートアップサウンド
+var xhr= new XMLHttpRequest();//動的にサーバ側と通信したい
+var locations=[];//位置情報を入れておく
+var lat, lng;//緯度・傾度をとる
+var range_level=11;//数値を上げるほど判断基準が適当になる、上げすぎるとどこでも反応しちゃう
+var lastState=0;//最後の更新で重なっていた場所の数
     window.onload = function(){
-        navigator.geolocation.watchPosition(update); //現在位置情報を定期的に監視
-        // navigator.geolocation.clearWatch(); //watchPosition()での監視を中止
-    }
+//サーバーから登録位置情報を引っ張る
+	xhr.open("GET","http://www.nyanchangames.com/geoServer.php?action=retrieve");//とりあえずうちのサーバになってる
+	xhr.send();
+	xhr.addEventListener("load",function(ev){//結果が返ってきたときにコールバック
+	var tmp=xhr.response.split("\n");//貰ったデータを、まずは1件1件に分ける
+	for(var i=0;i<tmp.length;i++){//次は値ごとに分けて2次元配列にぶっこむ
+		if(tmp[i]=="") continue;
+		var tmp2=tmp[i].split(",");
+		var array_tmp=[tmp2[0],tmp2[1],tmp2[2]];
+		locations[i]=array_tmp;
+		//精度に応じて最後の桁を捨てる
+		locations[i][0]=locations[i][0].substring(0,locations[i][0].length-range_level);
+		locations[i][1]=locations[i][1].substring(0,locations[i][1].length-range_level);
+	}
+
+	debug_update();//登録地点一覧を更新
+	xhr.removeEventListener("load", arguments.callee, false);//次のリクエストでこの関数がコールバックされないように
+});
+}
+
+function debug_update(){//登録地点一覧の更新、最初デバッグ用のつもりだったけど案外便利そうなんだよなぁ
+	var txt="登録地点一覧<br>";
+	for(var i=0;i<locations.length;i++){
+		txt+=locations[i][0]+" "+locations[i][1]+" "+locations[i][2]+"<br>";
+	}
+	document.getElementById("debug").innerHTML=txt;
+}
+
+function startTracking(){//トラッキング開始
+	//サウンドデータをダウンロード
+	snd_begin.load();
+	//snd_beep.load();
+	snd_cancel.load();
+	snd_find.load();
+	document.getElementById("main").innerHTML="近くにある登録地点がここに表示されます。";//位置情報のガイドがおもむろに現れる
+	document.getElementById("btn").innerHTML='<p><button type="button" onclick="postLocation();">現在地を登録</button></p>';//「現在地を登録」ボタンがおもむろに現れる
+	navigator.geolocation.watchPosition(update); //現在位置情報を定期的に監視
+	snd_begin.play();//スタートしたので音を鳴らす
+}
 
     function update(position){
-        //下記すべての情報が取得できるわけでは無い
-        var lat = position.coords.latitude; //緯度
-        var lng = position.coords.longitude; //経度
-        var alt = position.coords.altiude; //高度
-        var acc = position.coords.accuracy; //緯度経度の誤差
-        var alc = position.coords.altiudeAccuracy; //高度の誤差
-        var hed = position.coords.heading; //方角
-        var spe = position.coords.speed; //スピード
+	//まずは画面上に位置情報を出す
+	lat = position.coords.latitude; //緯度
+	lng = position.coords.longitude; //経度
+	//        var alt = position.coords.altiude; //高度
+	//        var acc = position.coords.accuracy; //緯度経度の誤差
+	//        var alc = position.coords.altiudeAccuracy; //高度の誤差
+	//        var hed = position.coords.heading; //方角
+	//        var spe = position.coords.speed; //スピード
+	//使わないのを適当にコメントアウトするとか汚いよね、でももしかしたらこれからの変更で使うかもしれないし、そのときに調べなおすのも面倒だしみたいな
+	var txt  = "緯度:" + lat + "<br>";
+	txt += "経度:" + lng + "<br>";
+	//            txt += "高度:" + alt + "<br>";
+	//            txt += "緯度経度誤差:" + acc + "<br>";
+	//            txt += "高度誤差:" + alc + "<br>";
+	//            txt += "方角:" + hed + "<br>";
+	//            txt += "速度:" + spe + "<br>";    
+	document.getElementById("result").innerHTML = txt;
 
-        var txt  = "緯度:" + lat + "<br>";
-            txt += "経度:" + lng + "<br>";
-            txt += "高度:" + alt + "<br>";
-            txt += "緯度経度誤差:" + acc + "<br>";
-            txt += "高度誤差:" + alc + "<br>";
-            txt += "方角:" + hed + "<br>";
-            txt += "速度:" + spe + "<br>";    
-        console.log(txt);
-        document.getElementById("result").innerHTML = txt;
+	//次に、登録されている位置情報との照合作業
+	//まずは、緯度と傾度をrange_levelにあわせて、後ろの桁を捨てる
+	var tmp_i=String(lat);
+	var tmp_k=String(lng);
+	tmp_i=tmp_i.substring(0,tmp_i.length-range_level);
+	tmp_k=tmp_k.substring(0,tmp_k.length-range_level);
+
+	//比較
+	var ret=[];//結果をプッシュしていく領域
+	for(var i=0;i<locations.length;i++){
+		if(locations[i][0]==tmp_i && locations[i][1]==tmp_k) ret.push(locations[i][2]);//位置が合ってるので追加
+	}
+	if(ret.length==0){//どこにも重なってない
+		document.getElementById("main").innerHTML="近くに登録地点はありません。";
+		if(lastState!=0){//前のフレームでどこかと重なっていたら、範囲外に離脱したことをサウンドで通知
+			lastState=0;
+			snd_cancel.play();
+		}
+		return;//どこにも重なってないので帰る
+	}
+	txt="";
+	for(i=0;i<ret.length-1;i++){//複数個所に重なってるかもしれないので
+		txt+=ret[i]+"と";
+	}
+	txt+=ret[ret.length-1]+"が近くにあります。";
+	document.getElementById("main").innerHTML=txt;
+	if(lastState<ret.length) snd_find.play();//重なってる場所が増えたら音で通知する
+	lastState=ret.length;
     }
+function postLocation(){
+	//緯度と傾度をrange_levelにあわせて、後ろの桁を捨てる
+	var tmp_i=String(lat);
+	var tmp_k=String(lng);
+	tmp_i=tmp_i.substring(0,tmp_i.length-range_level);
+	tmp_k=tmp_k.substring(0,tmp_k.length-range_level);
+	var array_tmp=[tmp_i,tmp_k,"新規登録地点"];
+	locations.push(array_tmp);
+	debug_update();
+	xhr.open("GET","http://www.nyanchangames.com/geoServer.php?action=register&i="+lat+"&k="+lng);//サーバには生データを送信する
+	xhr.send();
+	xhr.addEventListener("load",function(ev){//結果が返ってきたときにコールバック
+		if(xhr.response=="OK") snd_find.play();
+		xhr.removeEventListener("load", arguments.callee, false);
+	});
+}
+
     </script>
 </head>
 <body>
 
-    <body>
-    <p>あなたの現在位置</p>
+<div id="btn">
+    <p>トラッキングを開始するには、「スタート」ボタンを押してください。</p>
+<button type="button" onclick="startTracking();">スタート</button>
+</div>
+<div id="main"></div>
+<div id="debug"></div>
     <div id="result"></div>
 </body>
 </html>

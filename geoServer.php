@@ -5,10 +5,10 @@ if(!isset($_REQUEST["i"]) or !isset($_REQUEST["k"])) die("Insaficient parameter"
 //パラメータはちゃんとあるらしいから追記
 $fp=fopen("locations.dat","a");
 flock($fp,LOCK_EX);
-fwrite($fp,"\r\n".sprintf("%.10f,%.10f,新規登録地点",$_REQUEST["i"],$_REQUEST["k"]));
+fwrite($fp,sprintf("%s,%s,新規登録地点\r\n",$_REQUEST["i"],$_REQUEST["k"]));
 flock($fp,LOCK_UN);
 fclose($fp);
-die("OK:".$_REQUEST["i"]." ".$_REQUEST["k"]);
+die("OK");
 }//追加した
 
 if($_REQUEST["action"]=="retrieve"){//JSから情報がほしいといわれた
@@ -74,7 +74,7 @@ echo("<h2>該当データが見つからなかったため、処理を中止し�
 }else{
 $tmp=explode(",",$buf[$_REQUEST["slot"]]);//とりあえずコンマでぶった切る
 $tmp[2]=$_REQUEST["newName"];//名前だけ書き換え
-$buf[$_REQUEST["slot"]]=sprintf("%f,%f,%s\r\n",$tmp[0],$tmp[1],$tmp[2]);//もとの書式に戻してから再配置
+$buf[$_REQUEST["slot"]]=sprintf("%s,%s,%s\r\n",$tmp[0],$tmp[1],$tmp[2]);//もとの書式に戻してから再配置
 $fp=fopen("locations.dat","w");
 flock($fp,LOCK_EX);
 foreach($buf as $val){//書いて
