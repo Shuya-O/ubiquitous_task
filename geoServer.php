@@ -1,11 +1,11 @@
 <?php
 if(isset($_REQUEST["action"])){//JSとの通信処理用のコマンド軍
 if($_REQUEST["action"]=="register"){//JSから登録するようにといわれた
-if(!isset($_REQUEST["i"]) or !isset($_REQUEST["k"])) die("Insaficient parameter");//位置情報がないってどういうこっちゃねん
+if(!isset($_REQUEST["n"]) or !isset($_REQUEST["i"]) or !isset($_REQUEST["k"])) die("Insaficient parameter");//位置情報がないってどういうこっちゃねん
 //パラメータはちゃんとあるらしいから追記
 $fp=fopen("locations.dat","a");
 flock($fp,LOCK_EX);
-fwrite($fp,sprintf("%s,%s,新規登録地点\r\n",$_REQUEST["i"],$_REQUEST["k"]));
+fwrite($fp,sprintf("%s,%s,%s\r\n",$_REQUEST["i"],$_REQUEST["k"],$_REQUEST["n"]));
 flock($fp,LOCK_UN);
 fclose($fp);
 die("OK");

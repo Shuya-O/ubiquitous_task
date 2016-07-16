@@ -51,7 +51,7 @@ function startTracking(){//トラッキング開始
 	snd_cancel.load();
 	snd_find.load();
 	document.getElementById("main").innerHTML="近くにある登録地点がここに表示されます。";//位置情報のガイドがおもむろに現れる
-	document.getElementById("btn").innerHTML='<p><button type="button" onclick="postLocation();">現在地を登録</button></p>';//「現在地を登録」ボタンがおもむろに現れる
+	document.getElementById("btn").innerHTML='<p><label><input type="text" id="locname" maxlength="20">登録名</label><button type="button" onclick="postLocation();">現在地を登録</button></p>';//入力欄と「現在地を登録」ボタンがおもむろに現れる
 	navigator.geolocation.watchPosition(update); //現在位置情報を定期的に監視
 	snd_begin.play();//スタートしたので音を鳴らす
 }
@@ -105,15 +105,23 @@ function startTracking(){//トラッキング開始
 	lastState=ret.length;
     }
 function postLocation(){
+	var name="";
+	//登録地点の名前を設定
+	if(document.getElementById("locname").value==""){
+		name="新規登録地点"
+	}else{
+		name=document.getElementById("locname").value;
+		document.getElementById("locname").value="";
+	}
 	//緯度と傾度をrange_levelにあわせて、後ろの桁を捨てる
 	var tmp_i=String(lat);
 	var tmp_k=String(lng);
 	tmp_i=tmp_i.substring(0,tmp_i.length-range_level);
 	tmp_k=tmp_k.substring(0,tmp_k.length-range_level);
-	var array_tmp=[tmp_i,tmp_k,"新規登録地点"];
+	var array_tmp=[tmp_i,tmp_k,name];
 	locations.push(array_tmp);
 	debug_update();
-	xhr.open("GET","http://www.nyanchangames.com/geoServer.php?action=register&i="+lat+"&k="+lng);//サーバには生データを送信する
+	xhr.open("GET","http://www.nyanchangames.com/geoServer.php?action=register&i="+lat+"&k="+lng+"&n="+name);//サーバには生データを送信する
 	xhr.send();
 	xhr.addEventListener("load",function(ev){//結果が返ってきたときにコールバック
 		if(xhr.response=="OK") snd_find.play();
