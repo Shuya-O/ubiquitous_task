@@ -13,7 +13,7 @@ var snd_begin=new Audio("begin.mp3");//スタートアップサウンド
 var xhr= new XMLHttpRequest();//動的にサーバ側と通信したい
 var locations=[];//位置情報を入れておく
 var lat, lng;//緯度・傾度をとる
-var range_level=11;//数値を上げるほど判断基準が適当になる、上げすぎるとどこでも反応しちゃう
+var range_level=4;//小数点を何桁分使用するか
 var lastState=0;//最後の更新で重なっていた場所の数
     window.onload = function(){
 //サーバーから登録位置情報を引っ張る
@@ -27,14 +27,21 @@ var lastState=0;//最後の更新で重なっていた場所の数
 		var array_tmp=[tmp2[0],tmp2[1],tmp2[2]];
 		locations[i]=array_tmp;
 		//精度に応じて最後の桁を捨てる
-		locations[i][0]=locations[i][0].substring(0,locations[i][0].length-range_level);
-		locations[i][1]=locations[i][1].substring(0,locations[i][1].length-range_level);
+		locations[i][0]=parse(locations[i][0]);
+		locations[i][1]=parse(locations[i][1]);
 	}
 
 	debug_update();//登録地点一覧を更新
 	xhr.removeEventListener("load", arguments.callee, false);//次のリクエストでこの関数がコールバックされないように
 });
 }
+
+function parse(num){//緯度または軽度をパースする
+	//諸事情で、やっぱり文字列操作で実装したくなっちゃった
+	return num.substring(0,num.indexOf(".",0)+1+range_level);//意外と1行で書けて驚いてる、でも四捨五入はしてない
+}
+
+
 
 function debug_update(){//登録地点一覧の更新、最初デバッグ用のつもりだったけど案外便利そうなんだよなぁ
 	var txt="登録地点一覧<br>";
@@ -79,8 +86,8 @@ function startTracking(){//トラッキング開始
 	//まずは、緯度と傾度をrange_levelにあわせて、後ろの桁を捨てる
 	var tmp_i=String(lat);
 	var tmp_k=String(lng);
-	tmp_i=tmp_i.substring(0,tmp_i.length-range_level);
-	tmp_k=tmp_k.substring(0,tmp_k.length-range_level);
+tmp_i=parse(tmp_i);
+tmp_k=parse(tmp_k);
 
 	//比較
 	var ret=[];//結果をプッシュしていく領域
@@ -116,8 +123,8 @@ function postLocation(){
 	//緯度と傾度をrange_levelにあわせて、後ろの桁を捨てる
 	var tmp_i=String(lat);
 	var tmp_k=String(lng);
-	tmp_i=tmp_i.substring(0,tmp_i.length-range_level);
-	tmp_k=tmp_k.substring(0,tmp_k.length-range_level);
+	tmp_i=parse(tmp_i);
+	tmp_k=parse(tmp_k);
 	var array_tmp=[tmp_i,tmp_k,name];
 	locations.push(array_tmp);
 	debug_update();
